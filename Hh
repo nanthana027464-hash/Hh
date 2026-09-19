@@ -1,0 +1,99 @@
+-- โหลด Rayfield UI Library
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- สร้าง หน้าต่าง UIหลัก
+local Window = Rayfield:CreateWindow({
+   Name = "Speed Hack UI",
+   LoadingTitle = "กำลังโหลดระบบความเร็ว...",
+   LoadingSubtitle = "by Assistant",
+   ConfigurationSaving = {
+      Enabled = false,
+      FolderName = nil,
+      FileName = "SpeedConfig"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false -- ตั้งเป็น true หากต้องการใส่ระบบ Key
+})
+
+-- สร้าง แถบเมนู (Tab)
+local MainTab = Window:CreateTab("Main", 4483362458) -- สามารถเปลี่ยน Icon ID ได้
+
+-- ตัวแปรเก็บค่าการทำงาน
+local DefaultSpeed = 16
+local CustomSpeed = 16
+local SpeedEnabled = false
+
+-- ฟังชั้นอัปเดตความเร็วผู้เล่น
+local LocalPlayer = game.Players.LocalPlayer
+
+local function UpdateSpeed()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        if SpeedEnabled then
+            LocalPlayer.Character.Humanoid.WalkSpeed = CustomSpeed
+        else
+            LocalPlayer.Character.Humanoid.WalkSpeed = DefaultSpeed
+        end
+    end
+end
+
+-- ตรวจจับการเกิดใหม่ (Respawn) เพื่อให้ค่าความเร็วยังคงทำงานอยู่
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    task.wait(0.5)
+    UpdateSpeed()
+end)
+
+-- ทำการรัน Loop สั้นๆ เพื่อป้องกันเกมบางเกมรีเซ็ต WalkSpeed กลับเป็นค่าเดิม
+task.spawn(function()
+    while task.wait(0.1) do
+        if SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            if LocalPlayer.Character.Humanoid.WalkSpeed ~= CustomSpeed then
+                LocalPlayer.Character.Humanoid.WalkSpeed = CustomSpeed
+            end
+        end
+    end
+end)
+
+-- 1. ปุ่ม สวิตช์ เปิด/ปิด ระบบปรับความเร็ว
+local SpeedToggle = MainTab:CreateToggle({
+   Name = "เปิด / ปิด ความเร็ววิ่ง",
+   CurrentValue = false,
+   Flag = "SpeedToggle",
+   Callback = function(Value)
+      SpeedEnabled = Value
+      UpdateSpeed()
+   end,
+})
+
+-- 2. ตัวปรับระดับความเร็ว (Slider)
+local SpeedSlider = MainTab:CreateSlider({
+   Name = "ปรับระดับความเร็ว (WalkSpeed)",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = " Speed",
+   CurrentValue = 16,
+   Flag = "SpeedSlider",
+   Callback = function(Value)
+      CustomSpeed = Value
+      UpdateSpeed()
+   end,
+})
+
+-- แจ้งเตือนเมื่อโหลดสำเร็จ
+Rayfield:Notify({
+   Title = "ระบบพร้อมใช้งาน",
+   Content = "โหลด UI ปรับความเร็วสำเร็จแล้ว!",
+   Duration = 3,
+   Image = 4483362458,
+   Actions = {
+      Ignore = {
+         Name = "ตกลง",
+         Callback = function()
+         end
+      },
+   },
+})
